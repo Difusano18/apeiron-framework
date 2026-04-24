@@ -5,23 +5,21 @@ echo ============================================
 echo  APEIRON DEBUG LAUNCHER
 echo ============================================
 echo.
-echo [1] Робочий каталог : %CD%
-echo [2] Шукаю exe...
+echo [1] Working dir : %CD%
+echo [2] Looking for exe...
 
 set "EXE=build\bin\Release\apeiron-cli.exe"
 
 if exist "%EXE%" (
-    echo [OK] Exe знайдено: %EXE%
+    echo [OK] Found: %EXE%
 ) else (
-    echo [ПОМИЛКА] Exe НЕ знайдено за шляхом: %CD%\%EXE%
+    echo [ERROR] NOT FOUND: %CD%\%EXE%
     echo.
-    echo Вміст build\bin\Release\ :
-    dir "build\bin\Release\" 2>nul || echo   ^(папка не існує^)
+    echo Contents of build\bin\Release\ :
+    dir "build\bin\Release\" 2>nul || echo   directory does not exist
     echo.
-    echo Вміст build\ :
-    dir "build\" 2>nul || echo   ^(build папки немає взагалі^)
-    echo.
-    echo Запусти спочатку run.bat -^> опція [1] Build from scratch
+    echo Contents of build\ :
+    dir "build\" 2>nul || echo   build dir missing - run option 1 first
     echo.
     pause
     exit /b 1
@@ -29,7 +27,7 @@ if exist "%EXE%" (
 
 echo.
 echo ============================================
-echo  Запускаю симуляцію: 5000 циклів, HIGH
+echo  Running: 5000 cycles, HIGH speed, awakening
 echo ============================================
 echo.
 
