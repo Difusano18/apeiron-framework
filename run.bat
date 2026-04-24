@@ -4,6 +4,8 @@ setlocal EnableDelayedExpansion
 :: Always run from the directory where run.bat lives
 cd /d "%~dp0"
 
+echo [DEBUG] Script started. Working dir: %CD%
+
 :: APEIRON Framework Build and Run Script
 
 title APEIRON Build System
@@ -251,17 +253,31 @@ goto menu_end
 
 :run_interactive
 echo.
-echo [INFO] Starting interactive simulation (10000 cycles, HIGH acceleration)...
-echo [INFO] Press Ctrl+C to stop early
+echo [INFO] === DIAGNOSTIC INFO ===
+echo [INFO] Working dir : %CD%
+echo [INFO] BUILD_DIR   : %BUILD_DIR%
+echo [INFO] BUILD_TYPE  : %BUILD_TYPE%
+echo [INFO] Full path   : %CD%\%BUILD_DIR%\bin\%BUILD_TYPE%\apeiron-cli.exe
 echo.
+
 if not exist "%BUILD_DIR%\bin\%BUILD_TYPE%\apeiron-cli.exe" (
-    echo [ERROR] Executable not found at: %BUILD_DIR%\bin\%BUILD_TYPE%\apeiron-cli.exe
-    echo [ERROR] Please build first (option 1).
+    echo [ERROR] Executable NOT FOUND at:
+    echo         %CD%\%BUILD_DIR%\bin\%BUILD_TYPE%\apeiron-cli.exe
+    echo.
+    echo [INFO] Files in build\bin\Release\ :
+    dir "%BUILD_DIR%\bin\%BUILD_TYPE%\" 2>nul || echo   (directory does not exist^)
+    echo.
+    echo [INFO] Please run option [1] to build first.
     pause
     goto menu
 )
+
+echo [INFO] Exe found. Starting simulation (10000 cycles, HIGH)...
+echo [INFO] Press Ctrl+C to stop early
+echo.
 "%BUILD_DIR%\bin\%BUILD_TYPE%\apeiron-cli.exe" -c 10000 -s 2
 echo.
+echo [INFO] Exit code: %errorlevel%
 echo [INFO] Simulation ended.
 goto menu_end
 
