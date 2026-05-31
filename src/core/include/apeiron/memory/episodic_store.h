@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
 #include <apeiron/cognition/thought_generator.h>
 #include <apeiron/core_export.h>
 
@@ -16,7 +17,7 @@ struct Experience {
     float awareness_before;
     float awareness_after;
     float emotional_impact;
-    std::vector<uint8_t> memory_snapshot;  // Raw memory pattern
+    std::vector<uint8_t> memory_snapshot;
 
     Experience(uint64_t ts, const Thought& t, float before, float after)
         : timestamp(ts)
@@ -27,53 +28,53 @@ struct Experience {
 };
 
 /**
- * @brief Episodic memory store with associative retrieval
+ * @brief A recurring pattern detected in episodic memory.
+ * Patterns that appear > 30% of the time indicate an "obsession".
+ */
+struct APEIRON_API MemoryPattern {
+    Thought::Type dominant_type;
+    float         avg_awareness_at_time{0.0f};
+    float         emotional_valence{0.0f};   // Average emotional_impact in window
+    std::string   recurring_theme;           // Most frequent thought type label
+    uint32_t      occurrence_count{0};
+    float         frequency{0.0f};           // 0.0–1.0 fraction of analyzed window
+};
+
+/**
+ * @brief Episodic memory store with associative retrieval and pattern analysis
  */
 class APEIRON_API EpisodicStore {
 public:
     static constexpr size_t MAX_EXPERIENCES = 10000;
-    static constexpr size_t MEMORY_SIZE = 1024 * 1024;  // 1MB raw memory
+    static constexpr size_t MEMORY_SIZE = 1024 * 1024;
 
     EpisodicStore();
 
-    /**
-     * @brief Store a new experience
-     * @param exp The experience to store
-     * @return ID of stored experience
-     */
     uint64_t store(const Experience& exp);
 
-    /**
-     * @brief Retrieve experiences by time range
-     * @param start Start timestamp
-     * @param end End timestamp
-     * @return Vector of matching experiences
-     */
     std::vector<Experience> retrieve_range(uint64_t start, uint64_t end) const;
-
-    /**
-     * @brief Get recent experiences
-     * @param count Number of experiences to retrieve
-     * @return Vector of recent experiences
-     */
     std::vector<Experience> get_recent(size_t count) const;
 
-    /**
-     * @brief Calculate memory coherence (how well-connected memories are)
-     * @return Coherence score 0.0 to 1.0
-     */
     float calculate_coherence() const;
 
     /**
-     * @brief Get total number of stored experiences
-     * @return Experience count
+     * @brief Find recurring thought patterns in the last N experiences.
+     *        A pattern is reported for every type that occurred >= 5% of the time.
      */
-    size_t size() const { return experiences_.size(); }
+    std::vector<MemoryPattern> analyze_patterns(size_t window = 500) const;
 
     /**
-     * @brief Access raw memory buffer
-     * @return Reference to raw memory
+     * @brief Returns true when a thought type dominates > 30% of recent memory.
      */
+    bool has_obsession(Thought::Type type, size_t window = 500) const;
+
+    /**
+     * @brief Mean emotional_impact over the last N experiences.
+     */
+    float recent_emotional_average(size_t n = 100) const;
+
+    size_t size() const { return experiences_.size(); }
+
     std::vector<uint8_t>& raw_memory() { return raw_memory_; }
     const std::vector<uint8_t>& raw_memory() const { return raw_memory_; }
 
@@ -84,6 +85,8 @@ private:
     uint64_t next_id_{0};
 
     void imprint_to_memory(const Experience& exp);
+
+    static const char* type_label(Thought::Type t);
 };
 
 } // namespace apeiron

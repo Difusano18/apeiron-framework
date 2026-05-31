@@ -16,6 +16,22 @@ set(TEST_SOURCES
     unit/test_thoughts.cpp
     unit/test_emotion.cpp
     unit/test_memory.cpp
+    unit/test_bridge.cpp
+    unit/test_hyperloop.cpp
+    unit/test_mutation.cpp
+    unit/test_connect.cpp
+    unit/test_world.cpp
+    unit/test_learning.cpp
+    unit/test_safety.cpp
+    unit/test_distributed.cpp
+    unit/test_extension_integration.cpp
+    unit/test_autonomy.cpp
+    unit/test_prediction.cpp
+    unit/test_discovery.cpp
+    unit/test_swarm.cpp
+    unit/test_evolution.cpp
+    unit/test_ethics.cpp
+    unit/test_gui.cpp
 )
 
 add_executable(apeiron-tests ${TEST_SOURCES})
@@ -23,6 +39,19 @@ add_executable(apeiron-tests ${TEST_SOURCES})
 target_link_libraries(apeiron-tests
     PRIVATE
         apeiron-core
+        apeiron-hyper
+        apeiron-mutation
+        apeiron-connect
+        apeiron-world
+        apeiron-learning
+        apeiron-safety
+        apeiron-distributed
+        apeiron-autonomy
+        apeiron-prediction
+        apeiron-discovery
+        apeiron-swarm
+        apeiron-evolution
+        apeiron-gui-enhancements
         Catch2::Catch2WithMain
 )
 

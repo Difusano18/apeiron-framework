@@ -19,6 +19,8 @@ target_link_libraries(apeiron-viz
         apeiron-hyper
 )
 
+target_compile_definitions(apeiron-viz PRIVATE APEIRON_VIZ_BUILD)
+
 target_compile_features(apeiron-viz PUBLIC cxx_std_20)
 
 set_target_properties(apeiron-viz PROPERTIES

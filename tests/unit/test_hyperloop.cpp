@@ -325,6 +325,7 @@ TEST_CASE("HyperLoop tick callback is invoked", "[hyperloop][callback][tick]") {
     std::atomic<uint64_t> tick_count{0};
 
     loop.set_tick_callback([&tick_count](uint64_t tick) {
+        (void)tick;
         tick_count++;
     });
 

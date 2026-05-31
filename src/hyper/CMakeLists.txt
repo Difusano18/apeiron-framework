@@ -3,9 +3,8 @@
 
 set(HYPER_SOURCES
     src/time_dilation.cpp
+    src/hyper_loop.cpp
 )
-
-# TODO: Add snapshot_manager.cpp when implemented
 
 add_library(apeiron-hyper ${HYPER_SOURCES})
 
@@ -19,6 +18,8 @@ target_link_libraries(apeiron-hyper
     PUBLIC
         apeiron-core
 )
+
+target_compile_definitions(apeiron-hyper PRIVATE APEIRON_HYPER_BUILD)
 
 target_compile_features(apeiron-hyper PUBLIC cxx_std_20)
 

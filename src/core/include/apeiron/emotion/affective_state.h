@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 #include <apeiron/core_export.h>
 
 namespace apeiron {
@@ -9,7 +10,7 @@ namespace apeiron {
 /**
  * @brief Emotional state representation (circumplex model)
  */
-struct EmotionalState {
+struct APEIRON_API EmotionalState {
     float valence{0.0f};    // -1.0 (negative) to +1.0 (positive)
     float arousal{0.5f};    // 0.0 (calm) to 1.0 (excited)
 

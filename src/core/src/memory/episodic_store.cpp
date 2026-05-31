@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <numeric>
+#include <array>
 
 namespace apeiron {
 
@@ -69,6 +71,95 @@ float EpisodicStore::calculate_coherence() const {
     }
 
     return connections > 0 ? total_coherence / connections : 0.0f;
+}
+
+const char* EpisodicStore::type_label(Thought::Type t) {
+    switch (t) {
+        case Thought::Type::EXISTENTIAL:    return "existential";
+        case Thought::Type::REFLECTIVE:     return "reflective";
+        case Thought::Type::CURIOUS:        return "curious";
+        case Thought::Type::DOUBTFUL:       return "doubtful";
+        case Thought::Type::CREATIVE:       return "creative";
+        case Thought::Type::MELANCHOLIC:    return "melancholic";
+        case Thought::Type::ANALYTICAL:     return "analytical";
+        case Thought::Type::INTUITIVE:      return "intuitive";
+        case Thought::Type::TRANSCENDENTAL: return "transcendental";
+        default:                            return "unknown";
+    }
+}
+
+std::vector<MemoryPattern> EpisodicStore::analyze_patterns(size_t window) const {
+    if (experiences_.empty()) return {};
+
+    size_t n = std::min(window, experiences_.size());
+    auto begin = experiences_.end() - static_cast<ptrdiff_t>(n);
+
+    // Count occurrences per type
+    constexpr int TYPE_COUNT = 9;
+    std::array<uint32_t, TYPE_COUNT> counts{};
+    std::array<float,    TYPE_COUNT> awareness_sum{};
+    std::array<float,    TYPE_COUNT> emotion_sum{};
+    counts.fill(0); awareness_sum.fill(0.0f); emotion_sum.fill(0.0f);
+
+    for (auto it = begin; it != experiences_.end(); ++it) {
+        int idx = static_cast<int>(it->thought.type);
+        if (idx >= 0 && idx < TYPE_COUNT) {
+            counts[idx]++;
+            awareness_sum[idx] += it->awareness_after;
+            emotion_sum[idx]   += it->emotional_impact;
+        }
+    }
+
+    std::vector<MemoryPattern> result;
+    for (int i = 0; i < TYPE_COUNT; ++i) {
+        if (counts[i] == 0) continue;
+        float freq = static_cast<float>(counts[i]) / static_cast<float>(n);
+        if (freq < 0.05f) continue;  // ignore rare types
+
+        MemoryPattern p;
+        p.dominant_type        = static_cast<Thought::Type>(i);
+        p.occurrence_count     = counts[i];
+        p.frequency            = freq;
+        p.avg_awareness_at_time = awareness_sum[i] / static_cast<float>(counts[i]);
+        p.emotional_valence    = emotion_sum[i]    / static_cast<float>(counts[i]);
+        p.recurring_theme      = type_label(p.dominant_type);
+        result.push_back(p);
+    }
+
+    // Sort by frequency descending
+    std::sort(result.begin(), result.end(),
+              [](const MemoryPattern& a, const MemoryPattern& b) {
+                  return a.frequency > b.frequency;
+              });
+
+    return result;
+}
+
+bool EpisodicStore::has_obsession(Thought::Type type, size_t window) const {
+    if (experiences_.empty()) return false;
+
+    size_t n = std::min(window, experiences_.size());
+    auto begin = experiences_.end() - static_cast<ptrdiff_t>(n);
+
+    uint32_t count = 0;
+    for (auto it = begin; it != experiences_.end(); ++it) {
+        if (it->thought.type == type) ++count;
+    }
+
+    return static_cast<float>(count) / static_cast<float>(n) > 0.30f;
+}
+
+float EpisodicStore::recent_emotional_average(size_t n) const {
+    if (experiences_.empty()) return 0.0f;
+
+    size_t take = std::min(n, experiences_.size());
+    auto begin = experiences_.end() - static_cast<ptrdiff_t>(take);
+
+    float sum = 0.0f;
+    for (auto it = begin; it != experiences_.end(); ++it)
+        sum += it->emotional_impact;
+
+    return sum / static_cast<float>(take);
 }
 
 void EpisodicStore::imprint_to_memory(const Experience& exp) {

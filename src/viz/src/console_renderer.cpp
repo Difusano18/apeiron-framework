@@ -99,7 +99,7 @@ void ConsoleRenderer::render(const RenderState& state) {
     // Memory stats
     move_cursor(term_rows_ - 3, 1);
     std::cout << "╠ Memory: " << state.memory_size << " entries"
-              << " | Snapshots: " <> state.snapshot_count << " ╣";
+              << " | Snapshots: " << state.snapshot_count << " ╣";
 
     // Footer
     move_cursor(term_rows_, 1);
@@ -109,6 +109,7 @@ void ConsoleRenderer::render(const RenderState& state) {
 }
 
 void ConsoleRenderer::render_thought(const std::string& thought, int type, float intensity) {
+    (void)intensity;
     // Color based on thought type
     switch (type) {
         case 0: // EXISTENTIAL
@@ -211,7 +212,7 @@ void ConsoleRenderer::draw_timeline(const std::vector<float>& awareness_history,
     for (size_t i = 0; i < awareness_history.size() && i < static_cast<size_t>(width); ++i) {
         int bar_height = static_cast<int>(awareness_history[i] * height);
         for (int h = 0; h < bar_height; ++h) {
-            lines[height - 1 - h][i] = '█';
+            lines[height - 1 - h][i] = '#';
         }
     }
 

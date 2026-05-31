@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <apeiron/core_export.h>
+#include <apeiron/viz/viz_export.h>
 
 namespace apeiron {
 
@@ -12,7 +12,7 @@ namespace apeiron {
  * Renders consciousness state, thoughts, and metrics
  * in a terminal interface with live updates.
  */
-class APEIRON_API ConsoleRenderer {
+class APEIRON_VIZ_API ConsoleRenderer {
 public:
     struct RenderState {
         float awareness_level{0.0f};

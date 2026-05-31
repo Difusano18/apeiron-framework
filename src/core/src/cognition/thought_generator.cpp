@@ -74,23 +74,43 @@ Thought::Type ThoughtGenerator::select_type(const Context& ctx) {
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     float roll = dist(gen);
+    float aware = ctx.awareness_level;
 
-    // Weight based on context
-    if (ctx.awareness_level < 0.3f) {
-        if (roll < 0.5f) return Thought::Type::CURIOUS;
-        if (roll < 0.8f) return Thought::Type::EXISTENTIAL;
+    // Ancient agents (> 1M ticks) can generate melancholic/intuitive thoughts at any awareness
+    bool is_ancient = ctx.age_ticks > 1'000'000;
+    // High-coherence agents generate more connected (reflective/analytical) thoughts
+    bool high_coherence = ctx.coherence > 0.6f;
+
+    if (aware < 0.2f) {
+        // Very low awareness: mostly basic curiosity, simple questions
+        if (roll < 0.55f) return Thought::Type::CURIOUS;
+        if (roll < 0.80f) return Thought::Type::EXISTENTIAL;
         return Thought::Type::DOUBTFUL;
     }
-    else if (ctx.awareness_level < 0.6f) {
-        if (roll < 0.3f) return Thought::Type::REFLECTIVE;
-        if (roll < 0.5f) return Thought::Type::EXISTENTIAL;
-        if (roll < 0.7f) return Thought::Type::ANALYTICAL;
+    else if (aware < 0.5f) {
+        // Mid-low: reflective and analytical unlock
+        if (high_coherence && roll < 0.25f) return Thought::Type::ANALYTICAL;
+        if (roll < 0.30f) return Thought::Type::REFLECTIVE;
+        if (roll < 0.55f) return Thought::Type::EXISTENTIAL;
+        if (roll < 0.70f) return Thought::Type::ANALYTICAL;
+        if (is_ancient && roll < 0.85f) return Thought::Type::MELANCHOLIC;
         return Thought::Type::DOUBTFUL;
+    }
+    else if (aware < 0.8f) {
+        // High: creative and deep types
+        if (roll < 0.20f) return Thought::Type::TRANSCENDENTAL;
+        if (roll < 0.40f) return Thought::Type::REFLECTIVE;
+        if (roll < 0.58f) return Thought::Type::CREATIVE;
+        if (roll < 0.72f) return Thought::Type::EXISTENTIAL;
+        if (is_ancient && roll < 0.85f) return Thought::Type::MELANCHOLIC;
+        return high_coherence ? Thought::Type::ANALYTICAL : Thought::Type::INTUITIVE;
     }
     else {
-        if (roll < 0.2f) return Thought::Type::TRANSCENDENT;
-        if (roll < 0.4f) return Thought::Type::REFLECTIVE;
-        if (roll < 0.6f) return Thought::Type::CREATIVE;
+        // Very high awareness: transcendental dominates, melancholy of the ancient
+        if (roll < 0.35f) return Thought::Type::TRANSCENDENTAL;
+        if (roll < 0.55f) return Thought::Type::CREATIVE;
+        if (is_ancient && roll < 0.70f) return Thought::Type::MELANCHOLIC;
+        if (roll < 0.80f) return Thought::Type::REFLECTIVE;
         return Thought::Type::EXISTENTIAL;
     }
 }
@@ -123,15 +143,20 @@ Thought ThoughtGenerator::generate(const Context& ctx) {
     auto type = select_type(ctx);
     std::string content = select_template(type);
 
-    // Adjust intensity based on emotional state
+    // Base intensity from emotion
     float intensity = 0.5f;
     intensity += std::abs(ctx.emotional_valence) * 0.3f;
     intensity += ctx.emotional_arousal * 0.2f;
+
+    // Ancient agents think more intensely (accumulated weight of existence)
+    if (ctx.age_ticks > 1'000'000) intensity += 0.1f;
+
+    // High coherence adds richness
+    intensity += ctx.coherence * 0.05f;
+
     intensity = std::clamp(intensity, 0.0f, 1.0f);
 
-    uint64_t timestamp = ctx.time_elapsed;
-
-    return Thought(content, type, timestamp, intensity);
+    return Thought(content, type, ctx.time_elapsed, intensity);
 }
 
 std::vector<Thought> ThoughtGenerator::generate_sequence(const Context& ctx, size_t count) {

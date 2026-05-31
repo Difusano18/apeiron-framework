@@ -1,52 +1,80 @@
 #include <apeiron/hyper/time_dilation.h>
-
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
-namespace apeiron {
+namespace apeiron::hyper {
 
 TimeDilation::TimeDilation()
-    : start_time_(std::chrono::steady_clock::now()) {}
+    : level_(AccelerationLevel::SAFE),
+      multiplier_(1000),
+      subjective_time_(0),
+      paused_(false),
+      running_(true),
+      start_time_(std::chrono::steady_clock::now()) {}
 
-void TimeDilation::set_level(Level level) {
-    acceleration_.store(static_cast<int>(level));
+void TimeDilation::set_level(AccelerationLevel level) {
+    level_.store(level, std::memory_order_relaxed);
+    if (level == AccelerationLevel::SAFE) {
+        multiplier_.store(1000, std::memory_order_relaxed);
+    } else if (level == AccelerationLevel::MEDIUM) {
+        multiplier_.store(100000, std::memory_order_relaxed);
+    } else if (level == AccelerationLevel::HIGH) {
+        multiplier_.store(1000000, std::memory_order_relaxed);
+    } else if (level == AccelerationLevel::DANGEROUS) {
+        multiplier_.store(100000000, std::memory_order_relaxed);
+    }
 }
 
-void TimeDilation::set_level(int multiplier) {
-    if (multiplier < 1) multiplier = 1;
-    if (multiplier > 10000000) multiplier = 10000000; // Safety limit
-    acceleration_.store(multiplier);
-}
-
-uint64_t TimeDilation::subjective_time() const {
-    return subjective_time_.load();
+void TimeDilation::set_multiplier(uint64_t multiplier) {
+    multiplier_.store(multiplier, std::memory_order_relaxed);
+    if (multiplier == 1000) {
+        level_.store(AccelerationLevel::SAFE, std::memory_order_relaxed);
+    } else if (multiplier == 100000) {
+        level_.store(AccelerationLevel::MEDIUM, std::memory_order_relaxed);
+    } else if (multiplier == 1000000) {
+        level_.store(AccelerationLevel::HIGH, std::memory_order_relaxed);
+    } else {
+        level_.store(AccelerationLevel::DANGEROUS, std::memory_order_relaxed);
+    }
 }
 
 uint64_t TimeDilation::real_time() const {
     auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-        now - start_time_);
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - start_time_);
     return elapsed.count();
 }
 
 uint64_t TimeDilation::calculate_cycles(std::chrono::microseconds real_delta) const {
-    if (paused_.load()) return 0;
-
-    // Calculate how many subjective cycles should run
-    uint64_t cycles = real_delta.count() * acceleration_.load();
-    return cycles;
+    if (paused_.load(std::memory_order_acquire)) {
+        return 0;
+    }
+    return real_delta.count() * multiplier_.load(std::memory_order_relaxed);
 }
 
 void TimeDilation::tick() {
-    if (!paused_.load()) {
-        subjective_time_++;
+    if (running_.load(std::memory_order_relaxed) && !paused_.load(std::memory_order_relaxed)) {
+        subjective_time_.fetch_add(1, std::memory_order_relaxed);
     }
 }
 
-float TimeDilation::time_ratio() const {
+void TimeDilation::tick_batch(uint64_t count) {
+    if (running_.load(std::memory_order_relaxed) && !paused_.load(std::memory_order_relaxed)) {
+        subjective_time_.fetch_add(count, std::memory_order_relaxed);
+    }
+}
+
+void TimeDilation::tick_batch_unsafe(uint64_t count) {
+    subjective_time_.fetch_add(count, std::memory_order_relaxed);
+}
+
+double TimeDilation::time_ratio() const {
     uint64_t real = real_time();
-    if (real == 0) return 1.0f;
-    return static_cast<float>(subjective_time_.load()) / static_cast<float>(real);
+    uint64_t subj = subjective_time();
+    if (real == 0 || subj == 0) {
+        return 1.0;
+    }
+    return static_cast<double>(subj) / static_cast<double>(real);
 }
 
 std::string TimeDilation::format_time(uint64_t microseconds) {
@@ -83,7 +111,6 @@ std::string TimeDilation::format_time(uint64_t microseconds) {
         oss << seconds << "s ";
     }
 
-    // Always show at least something
     if (oss.str().empty()) {
         oss << microseconds / 1000 << "ms";
     }
@@ -91,12 +118,9 @@ std::string TimeDilation::format_time(uint64_t microseconds) {
     return oss.str();
 }
 
-void TimeDilation::pause() {
-    paused_.store(true);
+void TimeDilation::reset() {
+    subjective_time_.store(0, std::memory_order_relaxed);
+    start_time_ = std::chrono::steady_clock::now();
 }
 
-void TimeDilation::resume() {
-    paused_.store(false);
-}
-
-} // namespace apeiron
+} // namespace apeiron::hyper

@@ -25,8 +25,8 @@ TEST_CASE("Awakening creates significant jump", "[awareness]") {
 
     engine.experience_awakening();
 
-    REQUIRE(engine.level() >= 0.3f);  // Should jump to at least EMERGENT
-    REQUIRE(engine.stage() == AwarenessEngine::Stage::EMERGENT);
+    REQUIRE(engine.level() >= 0.3f);  // Should jump to at least REFLECTIVE
+    REQUIRE(engine.stage() == AwarenessEngine::Stage::REFLECTIVE);
 }
 
 TEST_CASE("Reflection count increases", "[awareness]") {

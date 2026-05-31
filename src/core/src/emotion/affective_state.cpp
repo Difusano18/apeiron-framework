@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 
 namespace apeiron {
 
@@ -34,6 +35,7 @@ AffectiveState::AffectiveState() {
 }
 
 void AffectiveState::process(const std::string& thought_content, int thought_type, float intensity) {
+    (void)thought_type;
     float new_valence = analyze_valence(thought_content);
     float new_arousal = analyze_arousal(thought_content);
 
@@ -60,7 +62,7 @@ float AffectiveState::analyze_valence(const std::string& text) {
     std::string lower;
     lower.reserve(text.size());
     for (char c : text) {
-        lower.push_back(std::tolower(c));
+        lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
     }
 
     float valence = 0.0f;
@@ -97,7 +99,7 @@ float AffectiveState::analyze_arousal(const std::string& text) {
     std::string lower;
     lower.reserve(text.size());
     for (char c : text) {
-        lower.push_back(std::tolower(c));
+        lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
     }
 
     float arousal = 0.5f;

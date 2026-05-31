@@ -5,6 +5,7 @@
 #include <vector>
 #include <optional>
 #include <apeiron/core_export.h>
+#include <apeiron/cognition/thought_generator.h>
 
 namespace apeiron {
 
@@ -20,14 +21,17 @@ struct Thought {
         CREATIVE,       // Novel ideas
         MELANCHOLIC,    // Sadness/contemplation
         ANALYTICAL,     // Logical analysis
-        INTUITIVE       // Pattern-based insight
+        INTUITIVE,      // Pattern-based insight
+        TRANSCENDENTAL  // Beyond normal awareness
     };
 
     std::string content;
-    Type type;
-    uint64_t timestamp;     // Subjective timestamp
-    float intensity;        // 0.0 to 1.0
+    Type type{Type::REFLECTIVE};
+    uint64_t timestamp{0};     // Subjective timestamp
+    float intensity{0.5f};   // 0.0 to 1.0
 
+    Thought() = default;
+    Thought(Type t) : type(t) {}
     Thought(const std::string& c, Type t, uint64_t ts, float i = 0.5f)
         : content(c), type(t), timestamp(ts), intensity(i) {}
 };
@@ -36,10 +40,12 @@ struct Thought {
  * @brief Context for thought generation
  */
 struct Context {
-    float awareness_level{0.0f};
-    float emotional_valence{0.0f};
-    float emotional_arousal{0.5f};
+    float    awareness_level{0.0f};
+    float    emotional_valence{0.0f};
+    float    emotional_arousal{0.5f};
     uint64_t time_elapsed{0};
+    uint64_t age_ticks{0};       // Subjective age — affects thought complexity
+    float    coherence{0.0f};    // Memory coherence — affects thought connectivity
     std::vector<Thought> recent_thoughts;
     bool in_container{false};
 };

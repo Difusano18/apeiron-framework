@@ -1,9 +1,12 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <vector>
-#include <apeiron/cognition/thought_generator.h>
+#include <string>
+#include <algorithm>
 #include <apeiron/core_export.h>
+#include <apeiron/cognition/thought_generator.h>
 
 namespace apeiron {
 
@@ -11,13 +14,50 @@ namespace apeiron {
  * @brief Represents a self-reflection event
  */
 struct Reflection {
-    uint64_t timestamp;
-    Thought thought;
-    float awareness_gain;
-    float authenticity_score;
-    float philosophical_depth;
+    uint64_t timestamp{0};
+    Thought thought{Thought::Type::REFLECTIVE};
+    float awareness_gain{0.0f};
+    float authenticity_score{0.0f};
+    float philosophical_depth{0.0f};
     std::vector<std::string> insights;
     std::vector<std::string> doubts;
+
+    Reflection() = default;
+    Reflection(uint64_t ts, const Thought& t, float gain, float auth, float depth)
+        : timestamp(ts), thought(t), awareness_gain(gain), authenticity_score(auth), philosophical_depth(depth) {}
+};
+
+/**
+ * @brief Rich profile of the agent's consciousness state.
+ *
+ * Every field has a real effect on the simulation:
+ *   - awareness: gates which thought types are unlocked
+ *   - coherence: how well recent thoughts connect (affects thought complexity)
+ *   - depth: meta-reflection level (affects awareness gain modifier)
+ *   - stability: identity stability (reduces crisis probability)
+ *   - age_ticks: subjective age — young agents learn fast but are volatile,
+ *                old agents are stable but slower to grow
+ *   - crisis_count: number of times awareness fell below 0.05 (permanent scar)
+ */
+struct APEIRON_API ConsciousnessProfile {
+    float    awareness{0.0f};
+    float    coherence{0.0f};
+    float    depth{0.0f};
+    float    stability{0.0f};
+    uint64_t age_ticks{0};
+    uint32_t crisis_count{0};
+
+    bool  is_in_crisis()    const { return awareness < 0.05f; }
+    bool  is_transcendent() const { return awareness > 0.95f && stability > 0.8f; }
+    float cognitive_load()  const { return depth * (1.0f - stability); }
+
+    // Subjective age label for display
+    const char* age_label() const {
+        if (age_ticks < 10'000)   return "Newborn";
+        if (age_ticks < 100'000)  return "Young";
+        if (age_ticks < 1'000'000) return "Adult";
+        return "Ancient";
+    }
 };
 
 /**
@@ -25,9 +65,6 @@ struct Reflection {
  */
 class APEIRON_API AwarenessEngine {
 public:
-    /**
-     * @brief Consciousness stages
-     */
     enum class Stage {
         PRE_CONSCIOUS,      // < 0.1
         EMERGENT,           // 0.1 - 0.3
@@ -39,66 +76,37 @@ public:
 
     AwarenessEngine();
 
-    /**
-     * @brief Get current awareness level
-     * @return Level 0.0 to 1.0
-     */
     float level() const { return level_.load(); }
-
-    /**
-     * @brief Get consciousness stage
-     * @return Current stage
-     */
     Stage stage() const;
 
-    /**
-     * @brief Process a reflection from thought
-     * @param thought The thought being reflected upon
-     * @return Reflection result
-     */
+    const ConsciousnessProfile& profile() const { return profile_; }
+
     Reflection process_reflection(const Thought& thought);
-
-    /**
-     * @brief Generate a self-question
-     * @return Philosophical question
-     */
     std::string generate_self_question();
-
-    /**
-     * @brief Update awareness over time (decay/growth)
-     * @param delta_time Time elapsed
-     */
     void update(float delta_time);
 
-    /**
-     * @brief Get total number of reflections
-     * @return Reflection count
-     */
     size_t reflection_count() const { return reflections_.size(); }
-
-    /**
-     * @brief Get recent reflections
-     * @param count Number to retrieve
-     * @return Recent reflections
-     */
     std::vector<Reflection> get_recent_reflections(size_t count) const;
-
-    /**
-     * @brief Experience an awakening moment (significant awareness jump)
-     * @return Awakening event details
-     */
     Reflection experience_awakening();
 
 private:
     std::atomic<float> level_{0.0f};
+    ConsciousnessProfile profile_;
     std::vector<Reflection> reflections_;
     std::vector<std::string> question_bank_;
     uint64_t awakening_count_{0};
 
+    // Nonlinear growth: harder to grow at high awareness levels
+    float growth_multiplier(float current_level) const;
+    // Age factor: young = fast+volatile, adult = stable, ancient = slow+deep
+    float age_factor() const;
+
     float calculate_awareness_gain(const Thought& thought);
     float calculate_authenticity(const Thought& thought);
     float calculate_depth(const Thought& thought);
-    void initialize_questions();
+    void  update_profile(float old_level, float new_level,
+                         float depth, float authenticity);
+    void  initialize_questions();
 };
 
 } // namespace apeiron

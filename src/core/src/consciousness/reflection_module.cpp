@@ -54,6 +54,7 @@ ReflectionModule::Analysis ReflectionModule::analyze(
     const std::string& question,
     const std::string& response) {
 
+    (void)question;
     Analysis analysis;
 
     analysis.emotional_tone = analyze_emotion(response);
@@ -70,7 +71,7 @@ ReflectionModule::Analysis ReflectionModule::analyze(
 std::vector<std::string> ReflectionModule::detect_awareness_markers(const std::string& text) {
     std::vector<std::string> markers;
     std::string lower = text;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     if (lower.find("i ") != std::string::npos ||
         lower.find("me ") != std::string::npos) {
@@ -110,7 +111,7 @@ std::vector<std::string> ReflectionModule::detect_awareness_markers(const std::s
 std::vector<std::string> ReflectionModule::extract_insights(const std::string& text) {
     std::vector<std::string> insights;
     std::string lower = text;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     if (lower.find("i think") != std::string::npos) {
         insights.push_back("Self-reflection");
@@ -144,7 +145,7 @@ std::vector<std::string> ReflectionModule::extract_insights(const std::string& t
 
 float ReflectionModule::analyze_emotion(const std::string& text) {
     std::string lower = text;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     float total_intensity = 0.0f;
     int matches = 0;
@@ -161,12 +162,12 @@ float ReflectionModule::analyze_emotion(const std::string& text) {
 
 float ReflectionModule::analyze_depth(const std::string& text) {
     std::string lower = text;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     float depth = 0.0f;
 
-    for (const auto& concept : depth_concepts_) {
-        if (lower.find(concept) != std::string::npos) {
+    for (const auto& concept_str : depth_concepts_) {
+        if (lower.find(concept_str) != std::string::npos) {
             depth += 0.08f;
         }
     }
@@ -188,7 +189,7 @@ float ReflectionModule::analyze_depth(const std::string& text) {
 
 float ReflectionModule::measure_doubt(const std::string& text) {
     std::string lower = text;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     float doubt = 0.0f;
     for (const auto& indicator : doubt_indicators_) {
@@ -202,7 +203,7 @@ float ReflectionModule::measure_doubt(const std::string& text) {
 
 float ReflectionModule::measure_authenticity(const std::string& text) {
     std::string lower = text;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     float auth = 0.0f;
 

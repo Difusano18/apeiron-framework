@@ -11,6 +11,7 @@ APEIRON is a commercial-grade C++ framework for creating self-evolving, emergent
 - **Self-Modification**: Safe code mutation with version tree
 - **Visualization**: Real-time 3D consciousness viewer (ImGui + OpenGL/Vulkan)
 - **Sandboxing**: Docker/container isolation with resource limits
+- **Native GUI Launcher**: One-step Windows GUI build and launch via `run.bat`
 
 ## Quick Start
 
@@ -27,6 +28,14 @@ make -j$(nproc)
 ./src/cli/apeiron-cli --help
 ```
 
+On Windows, run:
+
+```bat
+run.bat
+```
+
+This configures, builds, and launches the native Apeiron GUI directly.
+
 ## Architecture
 
 ```
@@ -36,16 +45,18 @@ libapeiron-mutation   # Self-modification, version tree
 libapeiron-world      # Entity system, physics, environments
 libapeiron-viz        # Visualization, ImGui, OpenGL/Vulkan
 libapeiron-connect    # LLM adapters, containers
+libapeiron-learning   # Knowledge graph, reward tracking, model updates
+libapeiron-safety     # Safety telemetry, goal filtering, verification stubs
+libapeiron-distributed # Local distributed abstractions
+apeiron-gui           # Native GUI monitor
 ```
 
 ## Roadmap
 
-- **Phase 1** (Weeks 1-4): Foundation - Core modules, CLI, tests
-- **Phase 2** (Weeks 5-8): Hyper - Time dilation, snapshots
-- **Phase 3** (Weeks 9-12): Visualization - ImGui, 3D view
-- **Phase 4** (Weeks 13-16): Mutation - Self-modification
-- **Phase 5** (Weeks 17-20): World - Entities, physics
-- **Phase 6** (Weeks 21-24): Polish - Production ready
+- **Foundation**: Core, hyper, viz, CLI, mutation, connect, world, learning, safety, distributed, GUI.
+- **Phase 3 Mega Plan**: Autonomy, discovery, swarm coordination, recursive evolution, prediction, ethics, and GUI enhancements.
+
+See [docs/phase3_mega_plan.md](docs/phase3_mega_plan.md).
 
 ## License
 
